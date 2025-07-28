@@ -59,7 +59,7 @@ The readme has lots of good info
 ___
 
 ### Q: Additional audit information.
-1. The intent is to place zero trust in the data returned by off chain automation, such that the contracts control all aspects of security. This is the primary concern: Is there any ability for mailicious `target` or `txData` to be used to compromise user funds? This would be a critical vulnerability. 
+1. The intent is to place zero trust in the data returned by off chain automation, such that the contracts control all aspects of security. 
 2. Issues related to `maxPendingOrders` with regard to denial of service attacks. There are mechanisms to mitigate these risks, it is unclear if they are sufficient (order creation fee, checkUpkeep optionally being able to skip stale orders, etc)
 
 ### General Notes
