@@ -7,23 +7,19 @@
 # Q&A
 
 ### Q: On what chains are the smart contracts going to be deployed?
-Optimism at first, all standard EVM L2s are potential. 
+Optimism 
 ___
 
 ### Q: If you are integrating tokens, are you allowing only whitelisted tokens to work with the codebase or any complying with the standard? Are they assumed to have certain properties, e.g. be non-reentrant? Are there any types of [weird tokens](https://github.com/d-xo/weird-erc20) you want to integrate?
-Any ERC20 as well as USDT are considered in scope. 
-
-Tokens must be whitelisted. 
-
-No rebase tokens, fee-on-transfer tokens, or tax tokens. 
+Only standard tokens and USDT are considered in-scope.
 ___
 
 ### Q: Are there any limitations on values set by admins (or other roles) in the codebase, including restrictions on array lengths?
 Owner is trusted. 
 
-TargetSetter is only trusted to set targets. 
+TargetSetter is a trusted role, that will set targets. 
 
-Off-chain automation is not trusted. 
+Off-chain automation shouldn't be able to steal any user funds. If they are, this can be viewed as the a valid issue.
 ___
 
 ### Q: Are there any limitations on values set by admins (or other roles) in protocols you integrate with, including restrictions on array lengths?
