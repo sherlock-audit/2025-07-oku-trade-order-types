@@ -50,6 +50,9 @@ ___
 ### Q: Please provide links to previous audits (if any) and all the known issues or acceptable risks.
 https://audits.sherlock.xyz/contests/641?filter=questions
 https://github.com/ObsidianAudits/audits/blob/main/2025-07-Oku-Obsidian-Audit.pdf
+
+It's known that the feeBips can be input as 0, and this's an acceptable risk, as it is a business parameter for our company and not intended to be a decentralised protocol.
+
 ___
 
 ### Q: Please list any relevant protocol resources.
@@ -76,13 +79,13 @@ ___
 
 ### Scope
 1. Gas related issues related to iterating are generally not in scope, as this will only be deployed to high performance L2 networks. 
-2. All ERC20 tokens (and USDT) are considered in scope, with the exception of any fee-on-transfer tokens, tax tokens, and rebasing tokens. 
+2. While only standard tokens and USDT are considered in-scope, it's highly recommended and appreciated for Watsons to submit low/info severity issues regarding different weird traits (besides fee-on-transfer, rebasing and tax tokens).
 3. The contract is expected to handle all aspects of accounting and verification before and after the swap to ensure the route provided by the caller of `performUpkeep()` is effective at satisfying the fill conditions of the order. 
 4. MEV / Frontrunning issues are generally out of scope so long as their risks can be adequately mitigated with the current levers available. To completely deter front running attacks, a slippage of 0 can potentially be used, which will ensure that there is no room to front run, with the consequence of needing a slightly 'better' effective price on the router in order for the order to fill. 
 5. Tokens and Routers are whitelisted for security, specifically in order to avoid malicious external calls by manipulating the `target` and/or `txData`. Any potential points of failure that require a malicious `target` or malicious tokens to be listed should likely be considered infomrational, as this point of failure can be considered operational security. 
 6. Only orders that can be filled per their user specified parameters (prices, slippage, etc) should be fillable, if any such orders are fillable outside these parameters, then this would be a vulnerability. 
 7. Oracle Providers are assumed to serve high quality data, currently only ChainLink on chain oracles are used. Oracles are assumed to return a USD price in 1e8 terms. Issues related to stale or otherwise incorrect responses from external oracles are considered to be out of scope
-8. Contract owners should not be able to steal user funds. User funds should only exist on `Bracket`, `StopLimit`, or `OracleLess`. Collected fees should only exist on `AutomationMaster`. There is the option for admins to cancel user orders and waive the refund, this is to remove broken or stale orders, should such issues arise. The funds from orders cancelled in this way will be locked on the contract and are not available to be stolen by anyone. 
+8. Contract owners should not be able to steal user funds. User funds should only exist on `Bracket`, `StopLimit`, or `OracleLess`. Collected fees should only exist on `AutomationMaster`. There is the option for admins to cancel user orders and waive the refund, this is to remove broken or stale orders, should such issues arise. The funds from orders cancelled in this way will be locked on the contract and are not available to be stolen by anyone. However, if contract owners or admins are able to steal user funds, it should be submitted as Low/info-severity issue, as they're trusted not to steal funds.
 
 
 
