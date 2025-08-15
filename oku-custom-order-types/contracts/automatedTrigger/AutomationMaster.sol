@@ -199,14 +199,24 @@ contract AutomationMaster is IAutomationMaster, Ownable, Pausable {
         return _getExchangeRate(tokenIn, tokenOut);
     }
 
+    function _getOraclePrices(
+        IERC20 tokenIn,
+        IERC20 tokenOut
+    ) internal view returns (uint256 priceIn, uint256 priceOut) {
+        // Retrieve USD prices from oracles, scaled to 1e8
+        priceIn = oracles[tokenIn].currentValue();
+        priceOut = oracles[tokenOut].currentValue();
+        
+        // Ensure priceOut is not zero to prevent division by zero
+        require(priceOut > 0, "Invalid priceOut");
+    }
+
     function _getExchangeRate(
         IERC20 tokenIn,
         IERC20 tokenOut
     ) internal view returns (uint256 exchangeRate) {
-        // Retrieve USD prices from oracles, scaled to 1e8
-        uint256 priceIn = oracles[tokenIn].currentValue();
-        uint256 priceOut = oracles[tokenOut].currentValue();
-
+        (uint256 priceIn, uint256 priceOut) = _getOraclePrices(tokenIn, tokenOut);
+        
         // Return the exchange rate in 1e8 terms
         return (priceIn * 1e8) / priceOut;
     }
@@ -233,23 +243,21 @@ contract AutomationMaster is IAutomationMaster, Ownable, Pausable {
         IERC20 tokenOut,
         uint96 slippageBips
     ) external view override returns (uint256 minAmountReceived) {
-        uint256 exchangeRate = _getExchangeRate(tokenIn, tokenOut);
+        (uint256 priceIn, uint256 priceOut) = _getOraclePrices(tokenIn, tokenOut);
         uint8 decimalIn = ERC20(address(tokenIn)).decimals();
         uint8 decimalOut = ERC20(address(tokenOut)).decimals();
 
         uint256 fairAmountOut;
 
         if (decimalIn > decimalOut) {
-            fairAmountOut =
-                (amountIn * exchangeRate) /
-                (10 ** (decimalIn - decimalOut)) /
-                1e8;
+            // Scale down by decimal difference to avoid double division
+            fairAmountOut = (amountIn * priceIn) / (10 ** (decimalIn - decimalOut) * priceOut);
         } else if (decimalIn < decimalOut) {
-            fairAmountOut =
-                (amountIn * exchangeRate * (10 ** (decimalOut - decimalIn))) /
-                1e8;
+            // Scale up by decimal difference
+            fairAmountOut = (amountIn * priceIn * (10 ** (decimalOut - decimalIn))) / priceOut;
         } else {
-            fairAmountOut = (amountIn * exchangeRate) / 1e8;
+            // No decimal scaling needed
+            fairAmountOut = (amountIn * priceIn) / priceOut;
         }
 
         // Apply slippage - 10000 bips is equivalent to 100% slippage
