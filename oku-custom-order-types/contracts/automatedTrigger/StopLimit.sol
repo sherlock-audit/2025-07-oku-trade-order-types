@@ -138,9 +138,8 @@ contract StopLimit is Ownable, IStopLimit, ReentrancyGuard, Pausable {
             performData,
             (MasterUpkeepData)
         );
-        uint96 orderIdFromSet = uint96(dataSet.at(data.pendingOrderIdx));
-        require(orderIdFromSet == data.orderId, "Order Fill Mismatch");
-        Order memory order = orders[uint96(dataSet.at(data.pendingOrderIdx))];
+        require(dataSet.contains(data.orderId), "order not active");
+        Order memory order = orders[data.orderId];
 
         //confirm order is in range to prevent improper fill
         (bool inRange, ) = checkInRange(order);
@@ -221,12 +220,16 @@ contract StopLimit is Ownable, IStopLimit, ReentrancyGuard, Pausable {
                 (IAutomation.Permit2Payload)
             );
 
-            require(payload.permitTransferFrom.permitted.token == address(tokenIn), "permit token mismatch");
+            require(
+                payload.permitTransferFrom.permitted.token == address(tokenIn),
+                "permit token mismatch"
+            );
 
-            IPermit2.SignatureTransferDetails memory transferDetails = IPermit2.SignatureTransferDetails({
-                to: address(this),
-                requestedAmount: amountIn
-            });
+            IPermit2.SignatureTransferDetails memory transferDetails = IPermit2
+                .SignatureTransferDetails({
+                    to: address(this),
+                    requestedAmount: amountIn
+                });
 
             permit2.permitTransferFrom(
                 payload.permitTransferFrom,
@@ -296,12 +299,18 @@ contract StopLimit is Ownable, IStopLimit, ReentrancyGuard, Pausable {
                         (IAutomation.Permit2Payload)
                     );
 
-                    require(payload.permitTransferFrom.permitted.token == address(order.tokenIn), "permit token mismatch");
+                    require(
+                        payload.permitTransferFrom.permitted.token ==
+                            address(order.tokenIn),
+                        "permit token mismatch"
+                    );
 
-                    IPermit2.SignatureTransferDetails memory transferDetails = IPermit2.SignatureTransferDetails({
-                        to: address(this),
-                        requestedAmount: _amountInDelta
-                    });
+                    IPermit2.SignatureTransferDetails
+                        memory transferDetails = IPermit2
+                            .SignatureTransferDetails({
+                                to: address(this),
+                                requestedAmount: _amountInDelta
+                            });
 
                     permit2.permitTransferFrom(
                         payload.permitTransferFrom,
@@ -378,14 +387,9 @@ contract StopLimit is Ownable, IStopLimit, ReentrancyGuard, Pausable {
     ///@notice allow administrator to cancel any order
     ///@notice once cancelled, any funds associated with the order are returned to the order recipient
     ///@notice only pending orders can be cancelled
-    ///NOTE if @param refund is false, then the order's tokens will not be refunded and will be stuck on this contract possibly forever
-    ///@notice ONLY SET @param refund TO FALSE IN THE CASE OF A BROKEN ORDER CAUSING cancelOrder() TO REVERT
-    function adminCancelOrder(
-        uint96 orderId,
-        bool refund
-    ) external onlyOwner nonReentrant {
+    function adminCancelOrder(uint96 orderId) external onlyOwner nonReentrant {
         Order memory order = orders[orderId];
-        _cancelOrder(order, refund);
+        _cancelOrder(order, true);
     }
 
     ///@notice only the order recipient can cancel their order

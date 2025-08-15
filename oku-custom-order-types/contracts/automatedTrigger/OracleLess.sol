@@ -157,14 +157,9 @@ contract OracleLess is IOracleLess, Ownable, ReentrancyGuard, Pausable {
     ///@notice allow administrator to cancel any order
     ///@notice once cancelled, any funds associated with the order are returned to the order recipient
     ///@notice only pending orders can be cancelled
-    ///NOTE if @param refund is false, then the order's tokens will not be refunded and will be stuck on this contract possibly forever
-    ///@notice ONLY SET @param refund TO FALSE IN THE CASE OF A BROKEN ORDER CAUSING cancelOrder() TO REVERT
-    function adminCancelOrder(
-        uint96 orderId,
-        bool refund
-    ) external onlyOwner nonReentrant {
+    function adminCancelOrder(uint96 orderId) external onlyOwner nonReentrant {
         Order memory order = orders[orderId];
-        _cancelOrder(order, refund);
+        _cancelOrder(order, true);
     }
 
     ///@notice only the order recipient can cancel their order
@@ -203,7 +198,6 @@ contract OracleLess is IOracleLess, Ownable, ReentrancyGuard, Pausable {
     }
 
     function fillOrder(
-        uint96 pendingOrderIdx,
         uint96 orderId,
         address target,
         bytes calldata txData
@@ -211,10 +205,7 @@ contract OracleLess is IOracleLess, Ownable, ReentrancyGuard, Pausable {
         //validate target
         MASTER.validateTarget(target);
 
-        require(
-            orderId == uint96(dataSet.at(pendingOrderIdx)),
-            "Order Fill Mismatch"
-        );
+        require(dataSet.contains(orderId), "order not active");
 
         //fetch order
         Order memory order = orders[orderId];
