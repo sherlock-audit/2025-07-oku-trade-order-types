@@ -327,7 +327,7 @@ const fillOracleLessOrder = async (signer: Signer) => {
                 await oracleLess.getAddress(),
                 order.minAmountOut
             )
-            await oracleLess.fillOrder(i, order.orderId, s.router02, txData)
+            await oracleLess.fillOrder(order.orderId, s.router02, txData)
             console.log(`Filled ${order.orderId} ${await tokenIn.symbol()} => ${await tokenOut.symbol()}`)
             //need to end loop, as the array idxs will be messed up if trying to fill multiple orders in one loop
             break

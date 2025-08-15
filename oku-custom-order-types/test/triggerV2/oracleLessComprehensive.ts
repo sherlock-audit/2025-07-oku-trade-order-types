@@ -500,8 +500,7 @@ describe("OracleLess Contract Comprehensive Tests", () => {
                 expectedAmountOut / 2n
             )
 
-            const orderIndex = await findOrderIndex(orderId)
-            await expect(s.OracleLess.fillOrder(orderIndex, orderId, invalidTarget, txData))
+            await expect(s.OracleLess.fillOrder(orderId, invalidTarget, txData))
                 .to.be.revertedWith("Target !Valid")
         })
 
@@ -516,10 +515,9 @@ describe("OracleLess Contract Comprehensive Tests", () => {
                 expectedAmountOut / 2n
             )
 
-            // Use a valid index but wrong order ID to test ID mismatch
-            const orderIndex = await findOrderIndex(orderId)
-            await expect(s.OracleLess.fillOrder(orderIndex, 999999n, s.router02, txData))
-                .to.be.revertedWith("Order Fill Mismatch")
+            // Use a wrong order ID to test order not active
+            await expect(s.OracleLess.fillOrder(999999n, s.router02, txData))
+                .to.be.revertedWith("order not active")
         })
 
         it("Should revert when minimum amount not received", async () => {
@@ -547,8 +545,7 @@ describe("OracleLess Contract Comprehensive Tests", () => {
                 0n // Don't enforce minimum in swap
             )
 
-            const orderIndex = await findOrderIndex(orderId)
-            await expect(s.OracleLess.fillOrder(orderIndex, orderId, s.router02, txData))
+            await expect(s.OracleLess.fillOrder(orderId, s.router02, txData))
                 .to.be.revertedWith("Too Little Received")
         })
 
@@ -566,8 +563,7 @@ describe("OracleLess Contract Comprehensive Tests", () => {
                 0n // Set to 0 for swap, order has its own minimum
             )
 
-            const orderIndex = await findOrderIndex(orderId)
-            await s.OracleLess.fillOrder(orderIndex, orderId, s.router02, txData)
+            await s.OracleLess.fillOrder(orderId, s.router02, txData)
 
             // Check order was removed
             const pendingOrders = await s.OracleLess.getPendingOrders()
@@ -671,23 +667,15 @@ describe("OracleLess Contract Comprehensive Tests", () => {
         it("Should allow admin to cancel order with refund", async () => {
             const initialBalance = await s.WETH.balanceOf(await s.Gary.getAddress())
 
-            await s.OracleLess.connect(s.Frank).adminCancelOrder(orderId, true)
+            await s.OracleLess.connect(s.Frank).adminCancelOrder(orderId)
 
             const finalBalance = await s.WETH.balanceOf(await s.Gary.getAddress())
             expect(finalBalance).to.eq(initialBalance + testAmount)
         })
 
-        it("Should allow admin to cancel order without refund", async () => {
-            const initialBalance = await s.WETH.balanceOf(await s.Gary.getAddress())
-
-            await s.OracleLess.connect(s.Frank).adminCancelOrder(orderId, false)
-
-            const finalBalance = await s.WETH.balanceOf(await s.Gary.getAddress())
-            expect(finalBalance).to.eq(initialBalance) // No refund
-        })
 
         it("Should revert when non-admin tries to admin cancel", async () => {
-            await expect(s.OracleLess.connect(s.Bob).adminCancelOrder(orderId, true))
+            await expect(s.OracleLess.connect(s.Bob).adminCancelOrder(orderId))
                 .to.be.revertedWith("Ownable: caller is not the owner")
         })
     })
@@ -745,10 +733,7 @@ describe("OracleLess Contract Comprehensive Tests", () => {
                 expectedAmountOut
             )
 
-            const orderIndex = await findOrderIndex(orderId)
-            expect(orderIndex).to.not.eq(-1, "Order should exist in pending orders")
-            
-            await expect(s.OracleLess.fillOrder(orderIndex, orderId, s.router02, txData))
+            await expect(s.OracleLess.fillOrder(orderId, s.router02, txData))
                 .to.be.revertedWithCustomError(s.OracleLess, "EnforcedPause")
 
             await s.OracleLess.connect(s.Frank).pause(false)
@@ -812,13 +797,8 @@ describe("OracleLess Contract Comprehensive Tests", () => {
                 0n // Set to 0 for swap, order has its own minimum
             )
 
-            // Find the correct pending order index for this orderId
-            const pendingOrders = await s.OracleLess.getPendingOrders()
-            const orderIndex = pendingOrders.findIndex(order => order.orderId === orderId)
-            expect(orderIndex).to.not.eq(-1, "Order should exist in pending orders")
-
             // This should work normally
-            await s.OracleLess.fillOrder(orderIndex, orderId, s.router02, txData)
+            await s.OracleLess.fillOrder(orderId, s.router02, txData)
         })
     })
 })

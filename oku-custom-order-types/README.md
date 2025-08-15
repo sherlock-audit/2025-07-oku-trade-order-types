@@ -7,7 +7,7 @@ See the [full docs](https://docs.oku.trade/home/advanced-orders) for more inform
 
 ## Automation
 
-The Automation Master contract is designed to be monitored by Chainlink Automation-type systems. Anyone can fill any of the orders as long as the order is eligible and they provide the necessary assets to satisfy the slippage requirements. The token-out assets are sent to the user as part of the upkeep function.
+The Automation Master contract is designed to be monitored by Chainlink Automation-type systems. However, it is not meant to work directly with Chainlink keepers, as off chain routing must be calculated as the order is filled.  Anyone can fill any of the orders as long as the order is eligible and they provide the necessary assets to satisfy the slippage requirements. The token-out assets are sent to the user as part of the upkeep function.
 
 ## Order Types
 
@@ -116,7 +116,7 @@ Then the tests can then be run by ```npm run test```
 ## Audit Scope
 
 ### Primary Concerns
-1. The intent is to place zero trust in the data returned by off chain automation, such that the contracts control all aspects of security. This is the primary concern: Is there any ability for mailicious `target` or `txData` to be used to compromise user funds? This would be a critical vulnerability. 
+1. The intent is to place zero trust in the data returned by off chain automation, such that the contracts control all aspects of security.
 2. Issues related to `maxPendingOrders` with regard to denial of service attacks. There are mechanisms to mitigate these risks, it is unclear if they are sufficient (order creation fee, checkUpkeep optionally being able to skip stale orders, etc)
 
 

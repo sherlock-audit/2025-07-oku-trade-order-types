@@ -344,7 +344,6 @@ interface IOracleLess {
     ) external payable;
 
     function fillOrder(
-        uint96 pendingOrderIdx,
         uint96 orderId,
         address target,
         bytes calldata txData

@@ -1070,7 +1070,7 @@ describe("Oracle Less", () => {
             await s.OracleLess.getAddress(),
             0n//pendingOrders[0].minAmountOut//5600885752
         )
-        expect(s.OracleLess.fillOrder(0n, orderId, s.router02, txData)).to.be.revertedWith("Too Little Received")
+        expect(s.OracleLess.fillOrder(orderId, s.router02, txData)).to.be.revertedWith("Too Little Received")
 
         //reset
         await s.WETH.connect
@@ -1101,7 +1101,7 @@ describe("Oracle Less", () => {
             pendingOrders[0].minAmountOut
         )
 
-        await s.OracleLess.fillOrder(0n, orderId, s.router02, txData)
+        await s.OracleLess.fillOrder(orderId, s.router02, txData)
     })
 
 })

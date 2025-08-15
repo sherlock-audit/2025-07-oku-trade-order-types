@@ -151,8 +151,7 @@ describe("Oracle and Pricing Edge Cases", () => {
                 0 // 0% slippage
             )
             // 3000 USDC @ $1 = $3000, $3000 / $3000 = 1 WETH (18 decimals)
-            // Allow for small rounding differences in decimal conversions
-            expect(minAmount).to.be.closeTo(ethers.parseEther("1"), ethers.parseEther("0.001"))
+            expect(minAmount).to.eq(ethers.parseEther("1"))
         })
 
         it("Should handle same decimal tokens", async () => {
@@ -409,7 +408,7 @@ describe("Oracle and Pricing Edge Cases", () => {
                 const result = await s.Master.checkUpkeep("0x")
                 // If it doesn't revert, it should still work logically
                 expect(result.upkeepNeeded).to.be.true // Max price should trigger take profit
-            } catch (error) {
+            } catch (error: any) {
                 // Overflow is acceptable behavior
                 expect(error.message).to.include("overflow")
             }
@@ -446,9 +445,12 @@ describe("Oracle and Pricing Edge Cases", () => {
                 const rate = await s.Master.getExchangeRate(await s.USDC.getAddress(), testToken1)
                 // If it doesn't revert, the rate should be very large
                 expect(rate).to.be.gt(ethers.parseUnits("1000000", 8))
-            } catch (error) {
-                // Division by zero is acceptable behavior
-                expect(error.message).to.include("division by zero")
+            } catch (error: any) {
+                // Division by zero or invalid price is acceptable behavior
+                expect(error.message).to.satisfy((msg: string) => 
+                    msg.includes("division by zero") || 
+                    msg.includes("Invalid priceOut")
+                )
             }
         })
     })
@@ -482,7 +484,7 @@ describe("Oracle and Pricing Edge Cases", () => {
                 const rate = await s.Master.getExchangeRate(testToken1, testToken2)
                 // If successful, rate should be very large
                 expect(rate).to.be.gt(ethers.parseUnits("1000000", 8))
-            } catch (error) {
+            } catch (error: any) {
                 // Overflow protection is acceptable
                 expect(error.message).to.include("overflow")
             }

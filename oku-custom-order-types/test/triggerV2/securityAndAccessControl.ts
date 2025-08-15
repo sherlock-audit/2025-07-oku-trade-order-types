@@ -67,7 +67,7 @@ describe("Security and Access Control Tests", () => {
             it("Should restrict admin functions to owner", async () => {
                 const unauthorizedUser = s.Bob
 
-                await expect(s.Bracket.connect(unauthorizedUser).adminCancelOrder(1, true))
+                await expect(s.Bracket.connect(unauthorizedUser).adminCancelOrder(1))
                     .to.be.revertedWith("Ownable: caller is not the owner")
             })
 
@@ -89,7 +89,7 @@ describe("Security and Access Control Tests", () => {
             it("Should restrict admin functions to owner", async () => {
                 const unauthorizedUser = s.Bob
 
-                await expect(s.StopLimit.connect(unauthorizedUser).adminCancelOrder(1, true))
+                await expect(s.StopLimit.connect(unauthorizedUser).adminCancelOrder(1))
                     .to.be.revertedWith("Ownable: caller is not the owner")
             })
 
@@ -108,7 +108,7 @@ describe("Security and Access Control Tests", () => {
                 await expect(s.OracleLess.connect(unauthorizedUser).whitelistTokens([], []))
                     .to.be.revertedWith("Ownable: caller is not the owner")
 
-                await expect(s.OracleLess.connect(unauthorizedUser).adminCancelOrder(1, true))
+                await expect(s.OracleLess.connect(unauthorizedUser).adminCancelOrder(1))
                     .to.be.revertedWith("Ownable: caller is not the owner")
             })
 
@@ -354,12 +354,7 @@ describe("Security and Access Control Tests", () => {
             const maliciousTarget = await s.Bob.getAddress()
             const txData = "0x12345678" // Arbitrary call data
 
-            // Find the correct pending order index for this orderId
-            const pendingOrders = await s.OracleLess.getPendingOrders()
-            const orderIndex = pendingOrders.findIndex(order => order.orderId === orderId)
-            expect(orderIndex).to.not.eq(-1, "Order should exist in pending orders")
-
-            await expect(s.OracleLess.fillOrder(orderIndex, orderId, maliciousTarget, txData))
+            await expect(s.OracleLess.fillOrder(orderId, maliciousTarget, txData))
                 .to.be.revertedWith("Target !Valid")
         })
 
@@ -381,13 +376,8 @@ describe("Security and Access Control Tests", () => {
                 0n // Set to 0 for swap, order has its own minimum
             )
 
-            // Find the correct pending order index for this orderId
-            const pendingOrders = await s.OracleLess.getPendingOrders()
-            const orderIndex = pendingOrders.findIndex(order => order.orderId === orderId)
-            expect(orderIndex).to.not.eq(-1, "Order should exist in pending orders")
-
             // This should work with whitelisted target
-            await s.OracleLess.fillOrder(orderIndex, orderId, s.router02, txData)
+            await s.OracleLess.fillOrder(orderId, s.router02, txData)
         })
     })
 
@@ -771,7 +761,7 @@ describe("Security and Access Control Tests", () => {
             await s.Master.connect(s.Frank).pauseAll(true)
 
             // Admin should still be able to cancel orders
-            await s.Bracket.connect(s.Frank).adminCancelOrder(orderId, true)
+            await s.Bracket.connect(s.Frank).adminCancelOrder(orderId)
 
             // Unpause
             await s.Master.connect(s.Frank).pauseAll(false)

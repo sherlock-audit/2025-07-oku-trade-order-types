@@ -677,7 +677,7 @@ describe("StopLimit Contract Edge Cases", () => {
             orderId = events[0].args[0]
         })
 
-        it("Should revert when order ID mismatch", async () => {
+        it("Should revert when order ID doesn't exist", async () => {
             // Set price to trigger
             await s.wethOracle.setPrice(currentPrice - ethers.parseUnits("99", 8))
 
@@ -704,7 +704,7 @@ describe("StopLimit Contract Edge Cases", () => {
                 ]]
             )
 
-            await expect(s.StopLimit.performUpkeep(badData)).to.be.revertedWith("Order Fill Mismatch")
+            await expect(s.StopLimit.performUpkeep(badData)).to.be.revertedWith("order not active")
         })
 
         it("Should revert when order not in range", async () => {
@@ -804,7 +804,7 @@ describe("StopLimit Contract Edge Cases", () => {
         it("Should allow admin to cancel order with refund", async () => {
             const initialBalance = await s.WETH.balanceOf(await s.Oscar.getAddress())
 
-            await s.StopLimit.connect(s.Frank).adminCancelOrder(orderId, true)
+            await s.StopLimit.connect(s.Frank).adminCancelOrder(orderId)
 
             const finalBalance = await s.WETH.balanceOf(await s.Oscar.getAddress())
             expect(finalBalance).to.eq(initialBalance + testAmount)
@@ -813,40 +813,9 @@ describe("StopLimit Contract Edge Cases", () => {
             expect(pendingOrders.find(order => order.orderId === orderId)).to.be.undefined
         })
 
-        it("Should allow admin to cancel order without refund", async () => {
-            // Create another order
-            await s.WETH.connect(s.Oscar).approve(await s.StopLimit.getAddress(), testAmount)
-            await s.StopLimit.connect(s.Oscar).createOrder(
-                currentPrice - ethers.parseUnits("100", 8),
-                currentPrice + ethers.parseUnits("200", 8),
-                currentPrice - ethers.parseUnits("200", 8),
-                testAmount,
-                await s.WETH.getAddress(),
-                await s.USDC.getAddress(),
-                await s.Oscar.getAddress(),
-                100,
-                500,
-                500,
-                500,
-                false,
-                "0x",
-                { value: s.fee }
-            )
-
-            const filter = s.StopLimit.filters.StopLimitOrderCreated
-            const events = await s.StopLimit.queryFilter(filter, -1)
-            const newOrderId = events[0].args[0]
-
-            const initialBalance = await s.WETH.balanceOf(await s.Oscar.getAddress())
-
-            await s.StopLimit.connect(s.Frank).adminCancelOrder(newOrderId, false) // No refund
-
-            const finalBalance = await s.WETH.balanceOf(await s.Oscar.getAddress())
-            expect(finalBalance).to.eq(initialBalance) // No change in balance
-        })
 
         it("Should revert when non-admin tries to admin cancel", async () => {
-            await expect(s.StopLimit.connect(s.Bob).adminCancelOrder(1, true))
+            await expect(s.StopLimit.connect(s.Bob).adminCancelOrder(1))
                 .to.be.revertedWith("Ownable: caller is not the owner")
         })
     })
